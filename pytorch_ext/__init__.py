@@ -1,3 +1,3 @@
 from . import nn
-__version__ = "0.3"
+__version__ = "0.4"
 __author__  = "David Leon (Dawei Leng)"
