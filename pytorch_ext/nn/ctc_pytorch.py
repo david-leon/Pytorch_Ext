@@ -37,7 +37,7 @@ class CTC_Log(object):
     C: class number
     T: time length (maximum time length of a batch)
     """
-    def __init__(self, eps=1E-12, inf=1E12, align='pre', device=-1):
+    def __init__(self, eps=1E-12, inf=1E12, align='pre', device=None):
         """
         :param eps:
         :param inf:
@@ -60,6 +60,11 @@ class CTC_Log(object):
         :param blank_symbol: scalar, = C by default      Integer
         :return: negative log likelihood averaged over a batch
         """
+        if self.device is None:
+            if not scorematrix.is_cuda():
+                self.device = -1
+            else:
+                self.device = scorematrix.get_device()
         if blank_symbol is None:
             blank_symbol = scorematrix.size(2) - 1
         queryseq_padded, queryseq_mask_padded = self._pad_blanks(queryseq, blank_symbol, queryseq_mask)
@@ -80,10 +85,15 @@ class CTC_Log(object):
         :param blank_symbol: = C by default             Integer
         :return:
         """
+        if self.device is None:
+            if not scorematrix.is_cuda():
+                self.device = -1
+            else:
+                self.device = scorematrix.get_device()
         if blank_symbol is None:
             blank_symbol = scorematrix.size(2) - 1
         if queryseq_mask_padded is None:
-            queryseq_mask_padded = Variable(torch.ones(queryseq_padded.size()).byte())
+            queryseq_mask_padded = Variable(torch.ones(queryseq_padded.size()).byte())    # pytorch's tensor constructor sucks!
             if self.device >= 0:
                 queryseq_mask_padded = queryseq_mask_padded.cuda(self.device)
         if scorematrix_mask is None:
