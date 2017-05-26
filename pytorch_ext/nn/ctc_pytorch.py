@@ -1,6 +1,6 @@
 # coding:utf-8
 __author__ = 'dawei.leng (David Leon)'
-__version__ = '1.48'
+__version__ = '1.49'
 
 """
  A pure pytorch implementation of CTC (Connectionist Temoral Classification) objective.
@@ -13,7 +13,9 @@ __version__ = '1.48'
     3) pure pytorch
 
  Created   :   3, 10, 2017
- Revised   :   3, 24, 2017   ver 1.48  add document
+ Revised   :   3, 24, 2017   v1.48 add document
+               5, 26, 2017   v1.49 fix sum overflow bug when computing `LL` and `TL`
+ Comment   :  this pure pytorch implementation use for-loop as equivalence of Theano's scan(), speed is much slower anyway.
 
  Reference :  [1] Alex Graves, etc., Connectionist temporal classification: labelling unsegmented sequence data with
                   recurrent neural networks, ICML, 2006
@@ -122,11 +124,11 @@ class CTC_Log(object):
             if self.align == 'pre':
                 alphas[i, :, :] = p_prev
 
-        LL  = torch.sum(queryseq_mask_padded, 1).long().squeeze()     # (B,)
+        LL  = torch.sum(queryseq_mask_padded.long(), 1).squeeze()     # (B,)
         # Idx = torch.range(0, B-1)                           # (B,)
 
         if self.align == 'pre':
-            TL = torch.sum(scorematrix_mask, 1).long().squeeze()      # (B,)
+            TL = torch.sum(scorematrix_mask.long(), 1).squeeze()      # (B,)
             a1 = torch.stack([alphas[TL.data[i]-1,i,LL.data[i]-1] for i in range(B)])
             a2 = torch.stack([alphas[TL.data[i]-1,i,LL.data[i]-2] for i in range(B)])
         else:
@@ -305,6 +307,8 @@ class CTC_Log(object):
 
 
 if __name__ == '__main__':
+    import os
+    os.environ['THEANO_FLAGS'] = "floatX=float32, mode=FAST_RUN, lib.cnmem=0, warn_float64='raise'"
     import numpy as np, time
     import theano
     from lasagne_ext.objectives import CTC_Logscale
@@ -312,51 +316,47 @@ if __name__ == '__main__':
     from torch.autograd import Variable
     # from ctc import best_path_decode
     # np.random.seed(33)
-    B = 2
-    C = 5
-    L = 3
-    T = 4
-    x1, x2, x3, x4, x5 = tensor.imatrix(name='queryseq'), \
+    B = 10
+    C = 50
+    L = 10
+    T = 500
+    x1, x2, x3, x4, x5 = tensor.fmatrix(name='queryseq'), \
                          tensor.tensor3(dtype='float32', name='scorematrix'), \
                          tensor.fmatrix(name='queryseq_mask'),\
                          tensor.fmatrix(name='scorematrix_mask'), \
-                         tensor.iscalar(name='blank_symbol')
-
-
+                         tensor.fscalar(name='blank_symbol')
 
     scorematrix = np.random.rand(T, C + 1, B).astype(np.float32)
-    query       = np.random.randint(0, C, (L, B)).astype(np.int32)
-    query_mask  = np.random.rand(L, B) > 0.5
-    sm_mask     = np.random.rand(T, B) > 0.5
+    query       = np.random.randint(0, C, (L, B)).astype(np.float32)
+    query_mask  = np.random.rand(L, B) > 0.1
+    sm_mask     = np.random.rand(T, B) > 0.1
 
 
-
-
-    result = CTC_Logscale.cost(x1, x2, x3, x4, x5, align='post')
-    f2 = theano.function([x1, x2, x3, x4, x5], result)
+    result = CTC_Logscale.cost(x1, x2, x3, x4, x5, align='pre')
+    f2 = theano.function([x1, x2, x3, x4, x5], result, on_unused_input='warn')
 
     time2 = time.time()
-    result = f2(query, scorematrix, query_mask.astype(np.float32), sm_mask.astype(np.float32), C)
-    print('theano:', result)
+    result = f2(query, scorematrix, query_mask.astype(np.float32), sm_mask.astype(np.float32), C+0.0)
+    print('theano: %0.10f' % result)
+    # print('theano: ' , result)
     time3 = time.time()
 
     time0 = time.time()
-    ctc = CTC_Log(align='post')
-    sm_v = Variable(torch.Tensor(scorematrix).transpose(1,2).transpose(0,1), requires_grad=True)
-    q_v  = Variable(torch.LongTensor(query.astype(np.int64)).transpose(0,1))
-    q_mask_v = Variable(torch.ByteTensor(query_mask.astype(np.uint8)).transpose(0,1))
+    ctc   = CTC_Log(align='pre')
+    sm_v  = Variable(torch.Tensor(scorematrix).transpose(1,2).transpose(0,1), requires_grad=True)
+    q_v   = Variable(torch.LongTensor(query.astype(np.int64)).transpose(0,1))
+    q_mask_v  = Variable(torch.ByteTensor(query_mask.astype(np.uint8)).transpose(0,1))
     sm_mask_v = Variable(torch.ByteTensor(sm_mask.astype(np.uint8)).transpose(0,1))
 
 
     result_torch = ctc.cost(q_v, sm_v, q_mask_v, sm_mask_v, C)
-    print('torch:', result_torch.data.numpy())
+    print('torch : %0.10f' % result_torch.data.numpy()[0])
+    # print('torch : ', result_torch.data.numpy())
     time1 = time.time()
 
+    print('Time = torch: %0.6fs | theano: %0.6fs' % (time1-time0, time3-time2))
 
-
-    print('Time = %0.6fs | %0.6fs' % (time1-time0, time3-time2))
-
-    result_torch.backward()
-    print(sm_v.grad)
+    # result_torch.backward()
+    # print(sm_v.grad)
 
 

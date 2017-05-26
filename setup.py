@@ -28,7 +28,7 @@ tests_require    = []
 setup(
     name="Pytorch_Ext",
     version=version,
-    description="Augment to Pytorch, including new layers, utility functions, etc. ",
+    description="Extention to Pytorch, including new layers, utility functions, etc. ",
     long_description="\n\n".join([README, CHANGES]),
     classifiers=[
         "Intended Audience :: Developers",
