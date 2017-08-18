@@ -1,7 +1,7 @@
 # coding:utf-8
 # Utility functions for Pytorch_Ext
 # Created   :   8, 11, 2017
-# Revised   :   8, 11, 2017
+# Revised   :   8, 18, 2017
 # All rights reserved
 #------------------------------------------------------------------------------------------------
 __author__ = 'dawei.leng'
@@ -17,6 +17,7 @@ def get_device(x):
         return -1
     else:
         return x.get_device()
+		
 def set_device(x, device):
     """
     Convenient & unified function for moving a Tensor or Variable to a specified device
