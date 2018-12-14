@@ -1,6 +1,6 @@
 # coding:utf-8
 __author__ = 'dawei.leng (David Leon)'
-__version__ = '1.49'
+__version__ = '1.50'
 
 """
  A pure pytorch implementation of CTC (Connectionist Temoral Classification) objective.
@@ -15,6 +15,7 @@ __version__ = '1.49'
  Created   :   3, 10, 2017
  Revised   :   3, 24, 2017   v1.48 add document
                5, 26, 2017   v1.49 fix sum overflow bug when computing `LL` and `TL`
+              12, 26, 2017   v1.50 make CTC_Log compatible with Pytorch 0.3.0
  Comment   :  this pure pytorch implementation use for-loop as equivalence of Theano's scan(), speed is much slower anyway.
 
  Reference :  [1] Alex Graves, etc., Connectionist temporal classification: labelling unsegmented sequence data with
@@ -217,9 +218,9 @@ class CTC_Log(object):
         if self.device >= 0:
             blanks = blanks.cuda(self.device)
         ybb = torch.cat((queryseq_padded, blanks), 1)                                       # (B, 2L+3)
-        sec_diag = (1 - torch.eq(ybb[:, :-2], ybb[:, 2:])) * torch.eq(ybb[:, 1:-1], blank_symbol)  # (B, 2L+1)
+        sec_diag = (1 - torch.eq(ybb[:, :-2], ybb[:, 2:]).float()) * torch.eq(ybb[:, 1:-1], blank_symbol).float()  # (B, 2L+1)
         if queryseq_mask_padded is not None:
-            sec_diag = sec_diag * queryseq_mask_padded
+            sec_diag = sec_diag * queryseq_mask_padded.float()
         r2 = Variable(torch.Tensor(np.eye(L2, L2, 1)))                                             # upper diagonal matrix (2L+1, 2L+1)
         r3 = Variable(torch.Tensor(np.eye(L2, L2, 2)).unsqueeze(2).expand(L2, L2, B))
         if self.device >= 0:
