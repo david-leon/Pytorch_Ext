@@ -1,3 +1,7 @@
-from . import nn
-__version__ = "0.6"
+from . import module
+from . import util
+from . import objective
+from . import functional
+
+__version__ = "0.7.0"
 __author__  = "David Leon (Dawei Leng)"
