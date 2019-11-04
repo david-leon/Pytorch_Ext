@@ -11,6 +11,7 @@ install:
   - travis_wait travis_retry pip install psutil
   - travis_wait travis_retry pip install dandelion
   - travis_wait travis_retry pip install git+https://github.com/Theano/Theano.git#egg=Theano
+  - travis_wait travis_retry pip install torch==1.3.0+cpu -f https://download.pytorch.org/whl/torch_stable.html
   - travis_retry python setup.py install
 script: pytest test
 
