@@ -197,7 +197,26 @@ class sys_output_tap:
             self.file.close()
             self.file = None
 
+class verbose_print(object):
+    """
+    `print` with verbose level filtering
+    """
+    def __init__(self, level=0, prefix=None):
+        self.level = level
+        self.prefix = prefix
 
+    def __call__(self, *args, **kwargs):
+        if self.prefix is not None:
+            print(self.prefix+': ', end='')
+        if 'l' not in kwargs:
+            l = 0
+        else:
+            l = kwargs['l']
+            kwargs.pop('l')
+        if l < self.level:
+            pass
+        else:
+            print(*args, **kwargs)
 
 if __name__ == '__main__':
     INFO = ['This is a collection of auxiliary functions for DL.\n',
