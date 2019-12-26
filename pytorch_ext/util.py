@@ -2,6 +2,7 @@
 # Utility functions for Pytorch_Ext
 # Created   :   8, 11, 2017
 # Revised   :   8, 18, 2017
+#              12, 26, 2019  add freeze_module()/unfreeze_module()/get_trainable_parameters()
 # All rights reserved
 #------------------------------------------------------------------------------------------------
 __author__ = 'dawei.leng'
@@ -9,6 +10,40 @@ import torch
 import gzip, pickle
 import socket, time
 import numpy as np
+
+def freeze_module(module):
+    """
+    Freeze a module
+    :param module: instance of nn.Module
+    :return: No return
+    """
+    module.train(False)
+    for param in module.parameters():
+        param.requires_grad_(False)
+
+def unfreeze_module(module):
+    """
+    Un-freeze a module
+    :param module: instance of nn.Module
+    :return: No return
+    """
+    module.train(True)
+    for param in module.parameters():
+        param.requires_grad_(True)
+
+def get_trainable_parameters(module, with_name=False):
+    """
+    Retrieve only trainable parameters, for feeding optimizer
+    :param module:
+    :param with_name: if True, output in format of (name, tensor), else only tensor returned
+    :return:
+    """
+    for name, tensor in module.named_parameters():
+        if tensor.requires_grad:
+            if with_name:
+                yield name, tensor
+            else:
+                yield tensor
 
 def get_device(x):
     """
@@ -86,7 +121,6 @@ class gpickle(object):
     @staticmethod
     def dumps(data):
         return pickle.dumps(data)
-
 
 class finite_memory_array(object):
 
