@@ -45,6 +45,16 @@ def get_trainable_parameters(module, with_name=False):
             else:
                 yield tensor
 
+def set_value(t, v):
+    """
+    Set tensor value with numpy array
+    :param t: tensor
+    :param v: numpy array
+    :return: No return
+    """
+    with torch.no_grad():
+        t.copy_(torch.from_numpy(v))
+
 def get_device(x):
     """
     Convenient & unified function for getting device a Tensor or Variable resides on
