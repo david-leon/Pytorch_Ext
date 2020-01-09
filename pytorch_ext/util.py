@@ -7,7 +7,7 @@
 #------------------------------------------------------------------------------------------------
 __author__ = 'dawei.leng'
 import torch
-import gzip, pickle
+import gzip, pickle, hashlib
 import socket, time
 import numpy as np
 
@@ -88,7 +88,8 @@ def grad_clip(parameters, min, max):
 
 class chunked_byte_writer(object):
     """
-    This class is used for by-passing the bug in gzip/zlib library: when data length exceeds unsigned int limit, gzip/zlib will break
+    This class is used for by-passing the bug in gzip/zlib library: when data length exceeds unsigned int32 limit,
+    gzip/zlib will break
     file: a file object
     """
     def __init__(self, file, chunksize=4294967295):
@@ -107,6 +108,7 @@ class gpickle(object):
         with gzip.open(filename, mode='wb', compresslevel=compresslevel) as f:
             pickle.dump(data, chunked_byte_writer(f))
             f.close()
+
     @staticmethod
     def load(filename):
         """
@@ -261,6 +263,23 @@ class verbose_print(object):
             pass
         else:
             print(*args, **kwargs)
+
+def get_file_md5(file=None, data=None):
+    """
+    Compute MD5 digest for binary file.
+    :param file: file path, if given, `data` input will be ignored
+    :param data: binary data, must be given if `file` is set to None
+    :return: string, file's MD5 digest
+    """
+    hasher = hashlib.md5()
+    if file is not None:
+        with open(file, mode='rb') as f:
+            data = f.read()
+    if data is None:
+        return None
+    hasher.update(data)
+    md5_digest = hasher.hexdigest()
+    return md5_digest
 
 if __name__ == '__main__':
     INFO = ['This is a collection of auxiliary functions for DL.\n',
