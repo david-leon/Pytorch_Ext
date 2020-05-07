@@ -127,12 +127,14 @@ class gpickle(object):
         return data
 
     @staticmethod
-    def loads(buf):
-        return pickle.loads(buf)
+    def loads(zipped_bytes):
+        bytes = gzip.decompress(zipped_bytes)
+        return pickle.loads(bytes)
 
     @staticmethod
-    def dumps(data):
-        return pickle.dumps(data)
+    def dumps(data, compresslevel=9):
+        zipped_bytes = gzip.compress(pickle.dumps(data), compresslevel=compresslevel)
+        return zipped_bytes
 
 class finite_memory_array(object):
 
