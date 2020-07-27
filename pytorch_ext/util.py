@@ -8,8 +8,9 @@
 __author__ = 'dawei.leng'
 import torch
 import gzip, pickle, hashlib
-import socket, datetime
+import socket
 import numpy as np
+from datetime import datetime
 
 def freeze_module(module):
     """
