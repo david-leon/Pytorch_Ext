@@ -8,7 +8,7 @@
 __author__ = 'dawei.leng'
 import torch
 import gzip, pickle, hashlib
-import socket, time
+import socket, datetime
 import numpy as np
 
 def freeze_module(module):
@@ -189,7 +189,7 @@ def get_time_stamp():
     Create a formatted string time stamp
     :return:
     """
-    return time.strftime("%Y-%m-%d_%H-%M-%S", time.localtime())
+    return datetime.now().strftime('%Y-%m-%d_%H-%M-%S.%f')
 
 class sys_output_tap:
     """
