@@ -1,10 +1,14 @@
 # coding:utf-8
-# Utility functions for Pytorch_Ext
-# Created   :   8, 11, 2017
-# Revised   :   8, 18, 2017
-#              12, 26, 2019  add freeze_module()/unfreeze_module()/get_trainable_parameters()
-# All rights reserved
-#------------------------------------------------------------------------------------------------
+"""
+Utility functions for Pytorch_Ext
+Created   :   8, 11, 2017
+Revised   :   8, 18, 2017
+             12, 26, 2019  add freeze_module()/unfreeze_module()/get_trainable_parameters()
+              7, 29, 2020  change default protocol of gpickle to v4
+
+All rights reserved
+"""
+
 __author__ = 'dawei.leng'
 import torch
 import gzip, pickle, hashlib
@@ -105,9 +109,9 @@ class gpickle(object):
     A pickle class with gzip enabled
     """
     @staticmethod
-    def dump(data, filename, compresslevel=9):
+    def dump(data, filename, compresslevel=9, protocol=4):
         with gzip.open(filename, mode='wb', compresslevel=compresslevel) as f:
-            pickle.dump(data, chunked_byte_writer(f))
+            pickle.dump(data, chunked_byte_writer(f), protocol=protocol)
             f.close()
 
     @staticmethod
@@ -133,8 +137,8 @@ class gpickle(object):
         return pickle.loads(bytes)
 
     @staticmethod
-    def dumps(data, compresslevel=9):
-        zipped_bytes = gzip.compress(pickle.dumps(data), compresslevel=compresslevel)
+    def dumps(data, compresslevel=9, protocol=4):
+        zipped_bytes = gzip.compress(pickle.dumps(data, protocol=protocol), compresslevel=compresslevel)
         return zipped_bytes
 
 class finite_memory_array(object):
