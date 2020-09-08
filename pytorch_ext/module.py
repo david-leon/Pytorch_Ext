@@ -133,14 +133,15 @@ class BatchNorm(nn.Module):
         self.n = 0
 
     def reset_parameters(self):
-        if self.mean is not None:
-            self.mean = self.mean * 0.0
-        if self.inv_std is not None:
-            self.inv_std = self.inv_std * 0.0 + 1.0
-        if self.beta is not None:
-            self.beta = self.beta * 0.0
-        if self.gamma is not None:
-            self.gamma = self.gamma * 0.0
+        with torch.no_grad():
+            if self.mean is not None:
+                self.mean = self.mean * 0.0
+            if self.inv_std is not None:
+                self.inv_std = self.inv_std * 0.0 + 1.0
+            if self.beta is not None:
+                self.beta.zero_()
+            if self.gamma is not None:
+                self.gamma.fill_(1.0)
 
     def forward(self, x):
         """
@@ -215,8 +216,9 @@ class Center(nn.Module):
         self.N_center = N_center
 
     def reset_parameters(self):
-        stdv = 1. / math.sqrt(self.centers.size(1))
-        self.centers.uniform_(-stdv, stdv)
+        with torch.no_grad():
+            stdv = 1. / math.sqrt(self.centers.size(1))
+            self.centers.uniform_(-stdv, stdv)
 
     def forward(self, inputs):  # inputs[0] = features (B, D), inputs[1] = target labels (B,)
         """
