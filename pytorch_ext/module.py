@@ -238,7 +238,7 @@ class Center(nn.Module):
             features, labels = inputs
             diff = (self.alpha - 1.0) * (self.centers.index_select(0, labels.data) - features.data)
             self.centers.index_add_(0, labels.data, diff)
-        return self.centers  # todo: maybe the returned type should be converted to Vairable instead of current Tensor
+        return self.centers
 
     def __repr__(self):
         return self.__class__.__name__ + ' (%d centers)' % self.N_center
