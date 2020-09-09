@@ -164,7 +164,7 @@ class BatchNorm(nn.Module):
             self.n = n  # this is the actual *batch size*
 
             if self.update_buffer_size > 1:
-                stat = [input_mean, input_inv_std, n]
+                stat = [input_mean.detach(), input_inv_std.detach(), n]
                 self.stat_buffer.append(stat)
                 if len(self.stat_buffer) > self.update_buffer_size:
                     self.stat_buffer.pop(0)
