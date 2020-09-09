@@ -63,7 +63,8 @@ class BatchNorm(nn.Module):
                  gamma               = 1.0,
                  mean                = 0.0,
                  inv_std             = 1.0,
-                 update_buffer_size  = 1
+                 update_buffer_size  = 1,
+                 update_batch_limit  = None
                  ):
         """
          :param input_shape: tuple or list of int or tensor variable. Including batch dimension. Any shape along axis defined in `axes` can be set to None
@@ -80,6 +81,9 @@ class BatchNorm(nn.Module):
                                     batches, this will help mitigate inconsistent statistics problem caused by small batch size. Note here
                                     batch size is calculated by dimention product specified by `axes`. This number can be varying for different
                                     input, you can retrieve it by attribute `self.n`
+         :param update_batch_limit: int, valid only when `update_buffer_size` > 1. This is an additional condition means only when the effective
+                                    batch size < `update_batch_limit`, the running mean & std statistics will be calculated across multiple recent
+                                    batches. Default = None, disabled.
          """
 
         super().__init__()
@@ -94,6 +98,8 @@ class BatchNorm(nn.Module):
         self.eps   = eps
         self.alpha = alpha
         self.update_buffer_size = update_buffer_size
+        self.update_batch_limit = update_batch_limit
+
 
         shape = [size for axis, size in enumerate(input_shape) if axis not in self.axes]  # remove all dimensions in axes
         if any(size is None for size in shape):
@@ -135,11 +141,11 @@ class BatchNorm(nn.Module):
     def reset_parameters(self):
         with torch.no_grad():
             if self.mean is not None:
-                self.mean = self.mean * 0.0
+                self.mean.fill_(0.0)
             if self.inv_std is not None:
-                self.inv_std = self.inv_std * 0.0 + 1.0
+                self.inv_std.fill_(1.0)
             if self.beta is not None:
-                self.beta.zero_()
+                self.beta.fill_(0.0)
             if self.gamma is not None:
                 self.gamma.fill_(1.0)
 
@@ -152,27 +158,27 @@ class BatchNorm(nn.Module):
         if self.mean is None and self.inv_std is None or self.training:
             input_mean = x.mean(self.axes)
             input_inv_std = 1.0 / (torch.sqrt(x.var(self.axes) + self.eps))
+            n = 1
+            for dim in self.axes:
+                n *= x.shape[dim]
+            self.n = n  # this is the actual *batch size*
 
             if self.update_buffer_size > 1:
-                n = 1
-                for dim in self.axes:
-                    n *= x.shape[dim]
                 stat = [input_mean, input_inv_std, n]
-                self.n = n   # this is the actual *batch size*
                 self.stat_buffer.append(stat)
                 if len(self.stat_buffer) > self.update_buffer_size:
                     self.stat_buffer.pop(0)
-
-                input_mean *= n
-                input_inv_std *= n
-                n_total = n
-                for mean_batch, inv_std_batch, n_batch in self.stat_buffer[:-1]:
-                    input_mean += mean_batch * n_batch
-                    input_inv_std += input_inv_std * n_batch
-                    n_total += n_batch
-                # print('n_total=', n_total)
-                input_mean /= n_total
-                input_inv_std /= n_total
+                if self.update_batch_limit is None or self.update_batch_limit is not None and self.n < self.update_batch_limit:
+                    input_mean *= n
+                    input_inv_std *= n
+                    n_total = n
+                    for mean_batch, inv_std_batch, n_batch in self.stat_buffer[:-1]:
+                        input_mean += mean_batch * n_batch
+                        input_inv_std += input_inv_std * n_batch
+                        n_total += n_batch
+                    # print('n_total=', n_total)
+                    input_mean /= n_total
+                    input_inv_std /= n_total
             # print('input_mean.shape', input_mean.shape)
 
         if self.training:

@@ -19,13 +19,13 @@ def test_case_0():
     assert(y.shape == (B, C, H, W))
 
     B, C, D = 4, 256, 128
-    bn = BatchNorm(input_shape=(None, C, D), axes=(0,2), update_buffer_size=2)
+    bn = BatchNorm(input_shape=(None, C, D), axes=(0,2), update_buffer_size=2, update_batch_limit=600)
     bn.reset_parameters()
     x = torch.from_numpy(np.random.rand(B, C, D))
     # bn.use_input_stat = False
     y = bn.forward(x)
     print('actual batch size = ', bn.n)
-    y = bn.forward(torch.from_numpy(np.random.rand(5, C, D)))
+    y = bn.forward(torch.from_numpy(np.random.rand(4, C, D)))
     print('actual batch size = ', bn.n)
     y = bn.forward(x+3.0)
     assert(y.shape == (B, C, D))
