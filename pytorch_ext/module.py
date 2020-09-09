@@ -169,14 +169,17 @@ class BatchNorm(nn.Module):
                 if len(self.stat_buffer) > self.update_buffer_size:
                     self.stat_buffer.pop(0)
                 if self.update_batch_limit is None or self.update_batch_limit is not None and self.n < self.update_batch_limit:
-                    input_mean *= n
-                    input_inv_std *= n
-                    n_total = n
+                    n_max = n
+                    for stat in self.stat_buffer[:-1]:
+                        n_max = max(n_max, stat[-1])
+                    n_total = n / n_max
+                    input_mean *= n_total
+                    input_inv_std *= n_total
                     for mean_batch, inv_std_batch, n_batch in self.stat_buffer[:-1]:
-                        input_mean += mean_batch * n_batch
-                        input_inv_std += input_inv_std * n_batch
-                        n_total += n_batch
-                    # print('n_total=', n_total)
+                        w = n_batch / n_max
+                        input_mean += mean_batch * w
+                        input_inv_std += input_inv_std * w
+                        n_total += w
                     input_mean /= n_total
                     input_inv_std /= n_total
             # print('input_mean.shape', input_mean.shape)
