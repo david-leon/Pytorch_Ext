@@ -19,7 +19,7 @@ def test_case_0():
     assert(y.shape == (B, C, H, W))
 
     B, C, D = 4, 256, 128
-    bn = BatchNorm(input_shape=(None, C, D), axes=(0,2), update_buffer_size=2, update_batch_limit=600)
+    bn = BatchNorm(input_shape=(None, C, D), axes=(0,2), update_buffer_size=2)
     bn.reset_parameters()
     x = torch.from_numpy(np.random.rand(B, C, D))
     # bn.use_input_stat = False

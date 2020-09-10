@@ -64,7 +64,6 @@ class BatchNorm(nn.Module):
                  mean                = 0.0,
                  inv_std             = 1.0,
                  update_buffer_size  = 1,
-                 update_batch_limit  = None
                  ):
         """
          :param input_shape: tuple or list of int or tensor variable. Including batch dimension. Any shape along axis defined in `axes` can be set to None
@@ -81,9 +80,6 @@ class BatchNorm(nn.Module):
                                     batches, this will help mitigate inconsistent statistics problem caused by small batch size. Note here
                                     batch size is calculated by dimention product specified by `axes`. This number can be varying for different
                                     input, you can retrieve it by attribute `self.n`
-         :param update_batch_limit: int, valid only when `update_buffer_size` > 1. This is an additional condition means only when the effective
-                                    batch size < `update_batch_limit`, the running mean & std statistics will be calculated across multiple recent
-                                    batches. Default = None, disabled.
          """
 
         super().__init__()
@@ -98,8 +94,6 @@ class BatchNorm(nn.Module):
         self.eps   = eps
         self.alpha = alpha
         self.update_buffer_size = update_buffer_size
-        self.update_batch_limit = update_batch_limit
-
 
         shape = [size for axis, size in enumerate(input_shape) if axis not in self.axes]  # remove all dimensions in axes
         if any(size is None for size in shape):
@@ -167,33 +161,32 @@ class BatchNorm(nn.Module):
                 input_inv_std = self.inv_std.detach()
 
             if self.update_buffer_size > 1:
-                stat = [input_mean.detach(), input_inv_std.detach(), n]
+                if len(self.stat_buffer) >= self.update_buffer_size:
+                    self.stat_buffer = []
+                stat = [input_mean, input_inv_std, n]
                 self.stat_buffer.append(stat)
-                if len(self.stat_buffer) > self.update_buffer_size:
-                    self.stat_buffer.pop(0)
-                if self.update_batch_limit is None or self.update_batch_limit is not None and self.n < self.update_batch_limit:
-                    n_max = n
-                    for stat in self.stat_buffer[:-1]:
-                        n_max = max(n_max, stat[-1])
-                    n_total = n / n_max
-                    input_mean *= n_total
-                    input_inv_std *= n_total
-                    for mean_batch, inv_std_batch, n_batch in self.stat_buffer[:-1]:
-                        w = n_batch / n_max
-                        input_mean += mean_batch * w
-                        input_inv_std += input_inv_std * w
-                        n_total += w
-                    input_mean /= n_total
-                    input_inv_std /= n_total
-                    if torch.all(torch.isnan(input_mean)):
-                        raise ValueError('BN: input_mean is all nan')
+                n_max = n
+                for stat in self.stat_buffer[:-1]:
+                    n_max = max(n_max, stat[-1])
+                n_total = n / n_max
+                input_mean *= n_total
+                input_inv_std *= n_total
+                for mean_batch, inv_std_batch, n_batch in self.stat_buffer[:-1]:
+                    w = n_batch / n_max
+                    input_mean += mean_batch * w
+                    input_inv_std += input_inv_std * w
+                    n_total += w
+                input_mean /= n_total
+                input_inv_std /= n_total
+                if torch.all(torch.isnan(input_mean)):
+                    raise ValueError('BN: input_mean is all nan')
             # print('input_mean.shape', input_mean.shape)
 
         if self.training and self.n > 1:
             if self.mean is not None:
-                self.mean = (1 - self.alpha) * self.mean + self.alpha * input_mean
+                self.mean = (1 - self.alpha) * self.mean + self.alpha * input_mean.detach()
             if self.inv_std is not None:
-                self.inv_std = (1 - self.alpha) * self.inv_std + self.alpha * input_inv_std
+                self.inv_std = (1 - self.alpha) * self.inv_std + self.alpha * input_inv_std.detach()
 
         if self.training:
             mean = input_mean.reshape(self.broadcast_shape)
@@ -213,6 +206,140 @@ class BatchNorm(nn.Module):
         normalized = (x - mean) * (gamma * inv_std) + beta
         return normalized
 
+class BatchNorm2(nn.Module):
+    """
+    Batch normalization for any dimention input, adapted from Dandelion's BatchNorm class
+    """
+    def __init__(self,
+                 input_shape         = None,
+                 axes                = 'auto',
+                 eps                 = 1e-5,
+                 alpha               = 0.01,
+                 beta                = 0.0,
+                 gamma               = 1.0,
+                 mean                = 0.0,
+                 inv_std             = 1.0,
+                 blend               = 1.0
+                 ):
+        """
+         :param input_shape: tuple or list of int or tensor variable. Including batch dimension. Any shape along axis defined in `axes` can be set to None
+         :param axes: 'auto' or tuple of int. The axis or axes to normalize over. If ’auto’ (the default), normalize over
+                       all axes except for the second: this will normalize over the minibatch dimension for dense layers,
+                       and additionally over all spatial dimensions for convolutional layers.
+         :param eps: Small constant 𝜖 added to the variance before taking the square root and dividing by it, to avoid numerical problems
+         :param alpha: mean = (1 - alpha) * mean + alpha * batch_mean
+         :param beta:  set to None to disable this parameter
+         :param gamma: set to None to disable this parameter
+         :param mean:  set to None to disable this buffer
+         :param inv_std: set to None to disable this buffer
+         """
+
+        super().__init__()
+        if input_shape is None:
+            raise ValueError('`input_shape` must be specified for BatchNorm class')
+        self.input_shape = input_shape
+        if axes == 'auto':      # default: normalize over all but the second axis
+            axes = (0,) + tuple(range(2, len(input_shape)))
+        if isinstance(axes, int):
+            axes = (axes,)
+        self.axes  = axes
+        self.eps   = eps
+        self.alpha = alpha
+        self.blend = blend   #todo: should this be learnable?
+
+        shape = [size for axis, size in enumerate(input_shape) if axis not in self.axes]  # remove all dimensions in axes
+        if any(size is None for size in shape):
+            raise ValueError("BatchNorm needs specified input sizes for all axes not normalized over.")
+
+        self.broadcast_shape = [1] * len(self.input_shape)
+        for i in range(len(self.input_shape)):
+            if i not in self.axes:
+                self.broadcast_shape[i] = self.input_shape[i]   # broadcast_shape = [1, C, 1, 1]
+
+        # --- beta & gamma are trained by BP ---#
+        if beta is None:
+            self.beta = None
+        else:
+            self.beta = Parameter(torch.zeros(size=shape) + beta)
+
+        if gamma is None:
+            self.gamma = None
+        else:
+            self.gamma = Parameter(torch.zeros(size=shape) + gamma)
+
+        # --- mean & inv_std are trained by self-updating ---#
+        if mean is not None:
+            self.register_buffer(name='mean', tensor=torch.zeros(size=shape) + mean)
+        else:
+            self.mean = None
+        if inv_std is not None:
+            self.register_buffer(name='inv_std', tensor=torch.zeros(size=shape) + inv_std)
+        else:
+            self.inv_std = None
+        self.n = 0
+
+    def reset_parameters(self):
+        with torch.no_grad():
+            if self.mean is not None:
+                self.mean.fill_(0.0)
+            if self.inv_std is not None:
+                self.inv_std.fill_(1.0)
+            if self.beta is not None:
+                self.beta.fill_(0.0)
+            if self.gamma is not None:
+                self.gamma.fill_(1.0)
+
+    def forward(self, x):
+        """
+        :param x:
+        :return:
+        """
+        # print('BN2input.shape=', x.shape)
+        if self.mean is None and self.inv_std is None or self.training:
+            n = 1
+            for dim in self.axes:
+                n *= x.shape[dim]
+            self.n = n  # this is the actual *batch size*
+            input_mean = x.mean(self.axes)
+            input_inv_std = 1.0 / (torch.sqrt(x.var(self.axes) + self.eps))
+            if self.n <= 1:
+                input_mean.fill_(0.0)
+                input_inv_std.fill_(1.0)
+
+        if self.training and self.n > 1:
+            if self.mean is not None:
+                self.mean = (1 - self.alpha) * self.mean + self.alpha * input_mean.detach()
+            if self.inv_std is not None:
+                self.inv_std = (1 - self.alpha) * self.inv_std + self.alpha * input_inv_std.detach()
+
+        if self.mean is not None:
+            mean = self.mean
+        else:
+            mean = 0.0
+        if self.inv_std is not None:
+            inv_std = self.inv_std
+        else:
+            inv_std = 1.0
+        if self.mean is None and self.inv_std is None:
+            mean = input_mean
+            inv_std = input_inv_std
+
+        if self.training and self.n > 1:
+            # print('HERE')
+            if self.mean is not None:
+                mean = (1.0 - self.blend) * self.mean + self.blend * input_mean
+                # mean = self.mean
+            if self.inv_std is not None:
+                inv_std = (1.0 - self.blend) * self.inv_std + self.blend * input_inv_std
+                # inv_std = self.inv_std
+
+        mean    = mean.reshape(self.broadcast_shape)
+        inv_std = inv_std.reshape(self.broadcast_shape)
+        beta    = 0.0 if self.beta  is None else torch.reshape(self.beta, self.broadcast_shape)
+        gamma   = 1.0 if self.gamma is None else torch.reshape(self.gamma, self.broadcast_shape)
+
+        normalized = (x - mean) * (gamma * inv_std) + beta
+        return normalized
 
 class Center(nn.Module):
     r"""
