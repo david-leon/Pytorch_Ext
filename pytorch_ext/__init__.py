@@ -3,5 +3,5 @@ from . import util
 from . import objective
 from . import functional
 
-__version__ = "0.8.8"
+__version__ = "0.8.9"
 __author__  = "David Leon (Dawei Leng)"
