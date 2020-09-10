@@ -63,7 +63,6 @@ class BatchNorm(nn.Module):
                  gamma               = 1.0,
                  mean                = 0.0,
                  inv_std             = 1.0,
-                 blend               = 1.0
                  ):
         """
          :param input_shape: tuple or list of int or tensor variable. Including batch dimension. Any shape along axis defined in `axes` can be set to None
@@ -89,7 +88,7 @@ class BatchNorm(nn.Module):
         self.axes  = axes
         self.eps   = eps
         self.alpha = alpha
-        self.blend = Parameter(torch.zeros(1) + blend)
+        self.blend = Parameter(torch.zeros(1) + 100.0)
 
         shape = [size for axis, size in enumerate(input_shape) if axis not in self.axes]  # remove all dimensions in axes
         if any(size is None for size in shape):
@@ -171,10 +170,11 @@ class BatchNorm(nn.Module):
         if self.training and self.n > 1:
             # print('HERE')
             if self.mean is not None:
-                mean = (1.0 - self.blend) * self.mean + self.blend * input_mean
+                w = torch.sigmoid(self.blend)
+                mean = (1.0 - w) * self.mean + w * input_mean
                 # mean = self.mean
             if self.inv_std is not None:
-                inv_std = (1.0 - self.blend) * self.inv_std + self.blend * input_inv_std
+                inv_std = (1.0 - w) * self.inv_std + w * input_inv_std
                 # inv_std = self.inv_std
 
         mean    = mean.reshape(self.broadcast_shape)
