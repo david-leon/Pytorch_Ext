@@ -156,12 +156,15 @@ class BatchNorm(nn.Module):
         """
         # print('input.shape=', x.shape)
         if self.mean is None and self.inv_std is None or self.training:
-            input_mean = x.mean(self.axes)
-            input_inv_std = 1.0 / (torch.sqrt(x.var(self.axes) + self.eps))
             n = 1
             for dim in self.axes:
                 n *= x.shape[dim]
             self.n = n  # this is the actual *batch size*
+            input_mean = x.mean(self.axes)
+            input_inv_std = 1.0 / (torch.sqrt(x.var(self.axes) + self.eps))
+            if self.n <= 1:
+                input_mean = self.mean
+                input_inv_std = self.inv_std
 
             if self.update_buffer_size > 1:
                 stat = [input_mean.detach(), input_inv_std.detach(), n]
@@ -182,9 +185,11 @@ class BatchNorm(nn.Module):
                         n_total += w
                     input_mean /= n_total
                     input_inv_std /= n_total
+                    if torch.all(torch.isnan(input_mean)):
+                        raise ValueError('BN: input_mean is all nan')
             # print('input_mean.shape', input_mean.shape)
 
-        if self.training:
+        if self.training and self.n > 1:
             if self.mean is not None:
                 self.mean = (1 - self.alpha) * self.mean + self.alpha * input_mean
             if self.inv_std is not None:

@@ -25,10 +25,18 @@ def test_case_0():
     # bn.use_input_stat = False
     y = bn.forward(x)
     print('actual batch size = ', bn.n)
-    y = bn.forward(torch.from_numpy(np.random.rand(4, C, D)))
+    y = bn.forward(torch.from_numpy(np.random.rand(1, C, 1)))
     print('actual batch size = ', bn.n)
     y = bn.forward(x+3.0)
     assert(y.shape == (B, C, D))
+
+    bn = BatchNorm(input_shape=(None, D), axes=(0), update_buffer_size=1)
+    bn.reset_parameters()
+    y = bn.forward(torch.from_numpy(np.random.rand(1, D)))
+    assert (y.shape == (1, D))
+    if torch.all(torch.isnan(y)):
+        raise ValueError('bn output is all nan')
+
 
 if __name__ == '__main__':
     test_case_0()
