@@ -163,8 +163,8 @@ class BatchNorm(nn.Module):
             input_mean = x.mean(self.axes)
             input_inv_std = 1.0 / (torch.sqrt(x.var(self.axes) + self.eps))
             if self.n <= 1:
-                input_mean = self.mean
-                input_inv_std = self.inv_std
+                input_mean = self.mean.detach()
+                input_inv_std = self.inv_std.detach()
 
             if self.update_buffer_size > 1:
                 stat = [input_mean.detach(), input_inv_std.detach(), n]
