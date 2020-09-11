@@ -53,6 +53,7 @@ class BatchNorm1d(nn.BatchNorm1d):
 class BatchNorm(nn.Module):
     """
     Batch normalization for any dimention input, adapted from Dandelion's BatchNorm class
+    According to experiment results, keep input statistics in backward propagation graph is crucial for the success of BN
     """
     def __init__(self,
                  input_shape         = None,
@@ -63,7 +64,6 @@ class BatchNorm(nn.Module):
                  gamma               = 1.0,
                  mean                = 0.0,
                  inv_std             = 1.0,
-                 blend               = None
                  ):
         """
          :param input_shape: tuple or list of int or tensor variable. Including batch dimension. Any shape along axis defined in `axes` can be set to None
@@ -75,7 +75,7 @@ class BatchNorm(nn.Module):
          :param beta:  set to None to disable this parameter
          :param gamma: set to None to disable this parameter
          :param mean:  set to None to disable this buffer
-         :param inv_std: set to None to disable this buffer
+         :param inv_std: set to None to disable this buffer. If both `mean` and `inv_std` are disabled, then input mean and variance will be used instead
          """
 
         super().__init__()
@@ -89,7 +89,6 @@ class BatchNorm(nn.Module):
         self.axes  = axes
         self.eps   = eps
         self.alpha = alpha
-        self.blend = blend
 
         shape = [size for axis, size in enumerate(input_shape) if axis not in self.axes]  # remove all dimensions in axes
         if any(size is None for size in shape):
@@ -138,12 +137,11 @@ class BatchNorm(nn.Module):
         :param x:
         :return:
         """
-        # print('BN2input.shape=', x.shape)
         if self.mean is None and self.inv_std is None or self.training:
             n = 1
             for dim in self.axes:
                 n *= x.shape[dim]
-            self.n = n  # this is the actual *batch size*
+            self.n = n                        # this is the actual *batch size*
             input_mean = x.mean(self.axes)
             input_inv_std = 1.0 / (torch.sqrt(x.var(self.axes) + self.eps))
             if self.n <= 1:
@@ -164,20 +162,9 @@ class BatchNorm(nn.Module):
             inv_std = self.inv_std
         else:
             inv_std = 1.0
-        if self.mean is None and self.inv_std is None:
+        if self.mean is None and self.inv_std is None or self.training and self.n > 1:
             mean    = input_mean
             inv_std = input_inv_std
-
-        if self.training and self.n > 1:
-            if self.blend is not None:
-                if self.mean is not None:
-                    mean = (1.0 - self.blend) * self.mean + self.blend * input_mean
-                if self.inv_std is not None:
-                    inv_std = (1.0 - self.blend) * self.inv_std + self.blend * input_inv_std
-            else:
-                mean    = input_mean
-                inv_std = input_inv_std
-
 
         mean    = mean.reshape(self.broadcast_shape)
         inv_std = inv_std.reshape(self.broadcast_shape)
