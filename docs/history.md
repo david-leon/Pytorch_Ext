@@ -1,6 +1,10 @@
 # History
 
-##version 0.8.0 [9-8-2020]
+## version 0.9.0 [11-24-2020]
+* **NEW**: add online documentation
+* **NEW**: add `functional.dropout()`
+
+## version 0.8.0 [9-8-2020]
 * **NEW**: add `BatchNorm` module for replacing pytorch's implementation
 
 ## version 0.7.6 [5-7-2020]
