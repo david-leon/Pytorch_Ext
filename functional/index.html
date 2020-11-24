@@ -112,19 +112,17 @@
             <div class="section">
               
                 <h2 id="dropout">dropout</h2>
-<p>Pooling 1 dimension along the given axis, support for any dimensional input.</p>
-<pre><code class="python">pool_1d(x, ws=2, ignore_border=True, stride=None, pad=0, mode='max', axis=-1)
+<p>Dropout function for any dimension input.</p>
+<pre><code class="python">dropout(input, p=0.5, shared_axes=(), rescale=True)
 </code></pre>
 
 <ul>
-<li><strong>ws</strong>: scalar int. Factor by which to downsample the input</li>
-<li><strong>ignore_border</strong>: bool. When <code>True</code>, dimension size=5 with <code>ws</code>=2 will generate a dimension size=2 output. 3 otherwise.</li>
-<li><strong>stride</strong>: scalar int. The number of shifts over rows/cols to get the next pool region. If stride is None, it is considered equal to ws (no overlap on pooling regions), eg: <code>stride</code>=1 will shifts over one row for every iteration.</li>
-<li><strong>pad</strong>: pad zeros to extend beyond border of the input</li>
-<li><strong>mode</strong>: {<code>max</code>, <code>sum</code>, <code>average_inc_pad</code>, <code>average_exc_pad</code>}. Operation executed on each window. <code>max</code> and <code>sum</code> always exclude the padding in the computation. <code>average</code> gives you the choice to include or exclude it.</li>
-<li><strong>axis</strong>: scalar int. Specify along which axis the pooling will be done</li>
+<li><strong>input</strong>: tensor to be applied.</li>
+<li><strong>p</strong>: float, probability to drop a value (set to zero)</li>
+<li><strong>shared_axes</strong>: tuple of int, axes to share the dropout mask over. By default, each value is dropped individually. For example, shared_axes=(0,) means using the same mask across the batch. shared_axes=(2, 3) means using the same mask across the spatial dimensions of 2D feature maps, i.e., drop channels.</li>
+<li><strong>rescale</strong>: if <code>True</code> (default), the input tensor will be rescaled by <code>1-p</code> to compensate mean fluctuation due to dropout<hr />
+</li>
 </ul>
-<hr />
               
             </div>
           </div>
