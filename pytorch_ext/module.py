@@ -4,6 +4,42 @@ import torch.nn.functional as F
 import math
 from torch.nn.parameter import Parameter
 
+class Center(nn.Module):
+    r"""
+    Used for center loss, maybe clustering in future
+    """
+
+    def __init__(self, feature_dim, center_num, alpha=0.9, centers=None):
+        super(Center, self).__init__()
+        if centers is not None:
+            self.register_buffer('centers', torch.from_numpy(centers))
+        else:
+            self.register_buffer('centers', torch.empty(center_num, feature_dim))
+            self.reset_parameters()
+        self.alpha = alpha
+        self.center_num = center_num
+
+    def reset_parameters(self):
+        with torch.no_grad():
+            stdv = 1. / math.sqrt(self.centers.size(1))
+            self.centers.uniform_(-stdv, stdv)
+
+    def forward(self, features=None, labels=None):
+        """
+        Call .forward(...) explicitly
+        :param inputs:
+        :return:
+        """
+        if not self.training:
+            pass
+        else:
+            diff = (self.alpha - 1.0) * (self.centers.index_select(0, labels.data) - features.data)
+            self.centers.index_add_(0, labels.data, diff)
+        return self.centers
+
+    def __repr__(self):
+        return self.__class__.__name__ + ' (%d centers)' % self.center_num
+
 class BatchNorm1d(nn.BatchNorm1d):
     """
     Modified from torch.nn.BatchNorm1d
@@ -53,6 +89,7 @@ class BatchNorm1d(nn.BatchNorm1d):
 class BatchNorm(nn.Module):
     """
     Batch normalization for any dimention input, adapted from Dandelion's BatchNorm class
+
     According to experiment results, keep input statistics in backward propagation graph is crucial for the success of BN
     """
     def __init__(self,
@@ -66,7 +103,7 @@ class BatchNorm(nn.Module):
                  inv_std             = 1.0,
                  ):
         """
-         :param input_shape: tuple or list of int or tensor variable. Including batch dimension. Any shape along axis defined in `axes` can be set to None
+         :param input_shape: tuple or list of int or tensor. Including batch dimension. Any shape along axis defined in `axes` can be set to None
          :param axes: 'auto' or tuple of int. The axis or axes to normalize over. If ’auto’ (the default), normalize over
                        all axes except for the second: this will normalize over the minibatch dimension for dense layers,
                        and additionally over all spatial dimensions for convolutional layers.
@@ -174,39 +211,3 @@ class BatchNorm(nn.Module):
         normalized = (x - mean) * (gamma * inv_std) + beta
         return normalized
 
-class Center(nn.Module):
-    r"""
-    Used for center loss, maybe clustering in future
-    """
-
-    def __init__(self, feature_dim, N_center, alpha=0.9, centers=None):
-        super(Center, self).__init__()
-        if centers is not None:
-            self.register_buffer('centers', torch.from_numpy(centers))
-        else:
-            self.register_buffer('centers', torch.empty(N_center, feature_dim))
-            self.reset_parameters()
-        self.alpha = alpha
-        self.N_center = N_center
-
-    def reset_parameters(self):
-        with torch.no_grad():
-            stdv = 1. / math.sqrt(self.centers.size(1))
-            self.centers.uniform_(-stdv, stdv)
-
-    def forward(self, inputs):  # inputs[0] = features (B, D), inputs[1] = target labels (B,)
-        """
-        Call .forward(...) explicitly
-        :param inputs:
-        :return:
-        """
-        if not self.training:
-            pass
-        else:
-            features, labels = inputs
-            diff = (self.alpha - 1.0) * (self.centers.index_select(0, labels.data) - features.data)
-            self.centers.index_add_(0, labels.data, diff)
-        return self.centers
-
-    def __repr__(self):
-        return self.__class__.__name__ + ' (%d centers)' % self.N_center

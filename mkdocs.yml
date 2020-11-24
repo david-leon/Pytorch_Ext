@@ -1,0 +1,20 @@
+site_name: pytorch extentions
+site_author: David Leon (Dawei Leng)
+docs_dir: docs
+
+markdown_extensions:
+    - pymdownx.arithmatex
+
+extra_javascript:
+    - https://cdn.mathjax.org/mathjax/latest/MathJax.js?config=TeX-AMS-MML_HTMLorMML
+
+nav:
+    - Home: index.md
+    - Module: module.md
+    - Functional: functional.md
+    - Util: util.md
+
+    - History: history.md
+
+theme: readthedocs    
+    

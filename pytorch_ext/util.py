@@ -62,6 +62,7 @@ def set_value(t, v):
 
 def get_device(x):
     """
+    Retrieve device from tensor or module
     :param x: Tensor or nn.Module
     :return: torch.device
     """
