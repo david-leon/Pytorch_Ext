@@ -1,5 +1,8 @@
 # History
 
+## version 0.9.1 [11-25-2020]
+* **NEW**: `functional.dropout()` now supports 1) varying dropout probability 2) replace dropped values with given `fill_value`
+
 ## version 0.9.0 [11-24-2020]
 * **NEW**: add online documentation
 * **NEW**: add `functional.dropout()`

@@ -24,6 +24,15 @@ def test_case_0():
     print('xt=', xt)
     print('yt=', yt)
 
+def test_case_1():
+    xt = torch.from_numpy(np.random.rand(4, 5).astype('float32')) + 1.0
+    # xt = xt.to(torch.device("cuda:0"))
+    yt = dropout(xt, p=(0.1, 0.5), shared_axes=(1,), rescale=False, fill_value=-5.0)
+    assert xt.shape == yt.shape
+    print('xt=', xt)
+    print('yt=', yt)
+
+
 if __name__ == '__main__':
-    test_case_0()
+    test_case_1()
     print('test_dropout passed~')

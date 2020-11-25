@@ -12,6 +12,7 @@ nav:
     - Home: index.md
     - Module: module.md
     - Functional: functional.md
+    - Objective: objective.md
     - Util: util.md
 
     - History: history.md
