@@ -15,6 +15,7 @@ Python Module     | Explanation
 ----------------- | ----------------
 module            | all neual network module definitions
 functional        | operations on tensor with no parameter to be learned
+objective         | objective definitions
 util              | utility functions
 
 
