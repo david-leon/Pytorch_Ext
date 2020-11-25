@@ -8,7 +8,7 @@
   
   <meta name="author" content="David Leon (Dawei Leng)">
   <link rel="shortcut icon" href="../img/favicon.ico">
-  <title>History - pytorch extentions</title>
+  <title>Objective - pytorch extentions</title>
   <link href='https://fonts.googleapis.com/css?family=Lato:400,700|Roboto+Slab:400,700|Inconsolata:400,700' rel='stylesheet' type='text/css'>
 
   <link rel="stylesheet" href="../css/theme.css" type="text/css" />
@@ -17,8 +17,8 @@
   
   <script>
     // Current page data
-    var mkdocs_page_name = "History";
-    var mkdocs_page_input_path = "history.md";
+    var mkdocs_page_name = "Objective";
+    var mkdocs_page_input_path = "objective.md";
     var mkdocs_page_url = null;
   </script>
   
@@ -63,9 +63,15 @@
     <a class="" href="../functional/">Functional</a>
 	    </li>
           
-            <li class="toctree-l1">
+            <li class="toctree-l1 current">
 		
-    <a class="" href="../objective/">Objective</a>
+    <a class="current" href="./">Objective</a>
+    <ul class="subnav">
+            
+    <li class="toctree-l2"><a href="#ctc">CTC</a></li>
+    
+
+    </ul>
 	    </li>
           
             <li class="toctree-l1">
@@ -73,35 +79,9 @@
     <a class="" href="../util/">Util</a>
 	    </li>
           
-            <li class="toctree-l1 current">
+            <li class="toctree-l1">
 		
-    <a class="current" href="./">History</a>
-    <ul class="subnav">
-            
-    <li class="toctree-l2"><a href="#history">History</a></li>
-    
-        <ul>
-        
-            <li><a class="toctree-l3" href="#version-091-11-25-2020">version 0.9.1 [11-25-2020]</a></li>
-        
-            <li><a class="toctree-l3" href="#version-090-11-24-2020">version 0.9.0 [11-24-2020]</a></li>
-        
-            <li><a class="toctree-l3" href="#version-080-9-8-2020">version 0.8.0 [9-8-2020]</a></li>
-        
-            <li><a class="toctree-l3" href="#version-076-5-7-2020">version 0.7.6 [5-7-2020]</a></li>
-        
-            <li><a class="toctree-l3" href="#version-075-1-8-2020">version 0.7.5 [1-8-2020]</a></li>
-        
-            <li><a class="toctree-l3" href="#version-074-1-3-2020">version 0.7.4 [1-3-2020]</a></li>
-        
-            <li><a class="toctree-l3" href="#version-073-12-26-2019">version 0.7.3 [12-26-2019]</a></li>
-        
-            <li><a class="toctree-l3" href="#version-072-11-5-2019">version 0.7.2 [11-5-2019]</a></li>
-        
-        </ul>
-    
-
-    </ul>
+    <a class="" href="../history/">History</a>
 	    </li>
           
         </ul>
@@ -126,7 +106,7 @@
     
       
     
-    <li>History</li>
+    <li>Objective</li>
     <li class="wy-breadcrumbs-aside">
       
     </li>
@@ -136,39 +116,28 @@
           <div role="main">
             <div class="section">
               
-                <h1 id="history">History</h1>
-<h2 id="version-091-11-25-2020">version 0.9.1 [11-25-2020]</h2>
+                <h2 id="ctc">CTC</h2>
+<p>A pure pytorch implementation of CTC (Connectionist Temoral Classification) objective.
+ Equivalent to its Theano counterpart <a href="https://github.com/david-leon/Dandelion/blob/master/dandelion/ctc_theano.py"><code>dandelion.objective.CTC_Logscale()</code></a>
+ The <code>cost()</code> function of <code>CTC_Log</code> class returns the average NLL over a batch samples given query sequences and score matrices.</p>
+<pre><code class="python">class CTC_Log(eps=1E-12, inf=1E12, align='pre')
+</code></pre>
+
 <ul>
-<li><strong>NEW</strong>: <code>functional.dropout()</code> now supports 1) varying dropout probability 2) replace dropped values with given <code>fill_value</code></li>
+<li><strong>align</strong>: {'pre' or 'post'}, indicating how samples in a batch are aligned.</li>
 </ul>
-<h2 id="version-090-11-24-2020">version 0.9.0 [11-24-2020]</h2>
+<pre><code class="python">.cost(queryseq, scorematrix, queryseq_mask=None, scorematrix_mask=None, blank_symbol=None)
+</code></pre>
+
+<p>Compute CTC cost, using only the forward pass</p>
 <ul>
-<li><strong>NEW</strong>: add online documentation</li>
-<li><strong>NEW</strong>: add <code>functional.dropout()</code></li>
-</ul>
-<h2 id="version-080-9-8-2020">version 0.8.0 [9-8-2020]</h2>
-<ul>
-<li><strong>NEW</strong>: add <code>BatchNorm</code> module for replacing pytorch's implementation</li>
-</ul>
-<h2 id="version-076-5-7-2020">version 0.7.6 [5-7-2020]</h2>
-<ul>
-<li><strong>MODIFIED</strong>: add support for gzip compression for <code>gpickle.loads()</code> &amp; <code>gpickle.dumps()</code> functions</li>
-</ul>
-<h2 id="version-075-1-8-2020">version 0.7.5 [1-8-2020]</h2>
-<ul>
-<li><strong>NEW</strong>: add <code>util.get_file_md5()</code> for file md5 check</li>
-</ul>
-<h2 id="version-074-1-3-2020">version 0.7.4 [1-3-2020]</h2>
-<ul>
-<li><strong>NEW</strong>: add <code>util.set_value()</code> for tensor initialization with numpy array</li>
-</ul>
-<h2 id="version-073-12-26-2019">version 0.7.3 [12-26-2019]</h2>
-<ul>
-<li><strong>NEW</strong>: Add <code>util.freeze_module()/unfreeze_module()/get_trainable_parameters()</code> for training parameters handling</li>
-</ul>
-<h2 id="version-072-11-5-2019">version 0.7.2 [11-5-2019]</h2>
-<ul>
-<li><strong>NEW</strong>: Add <code>util.verbose_print()</code> for <code>print</code> with verbose level filtering </li>
+<li><strong>queryseq</strong>:           (B, L)          LongTensor</li>
+<li><strong>scorematrix</strong>:        (B, T, C+1)     FloatTensor</li>
+<li><strong>queryseq_mask</strong>:      (B, L)          ByteTensor</li>
+<li><strong>scorematrix_mask</strong>:   (B, T)          ByteTensor</li>
+<li><strong>blank_symbol</strong>: scalar, = C by default  Integer</li>
+<li><strong>return</strong>: negative log likelihood averaged over a batch<hr />
+</li>
 </ul>
               
             </div>
@@ -177,8 +146,10 @@
   
     <div class="rst-footer-buttons" role="navigation" aria-label="footer navigation">
       
+        <a href="../util/" class="btn btn-neutral float-right" title="Util">Next <span class="icon icon-circle-arrow-right"></span></a>
       
-        <a href="../util/" class="btn btn-neutral" title="Util"><span class="icon icon-circle-arrow-left"></span> Previous</a>
+      
+        <a href="../functional/" class="btn btn-neutral" title="Functional"><span class="icon icon-circle-arrow-left"></span> Previous</a>
       
     </div>
   
@@ -204,8 +175,10 @@
     <span class="rst-current-version" data-toggle="rst-current-version">
       
       
-        <span><a href="../util/" style="color: #fcfcfc;">&laquo; Previous</a></span>
+        <span><a href="../functional/" style="color: #fcfcfc;">&laquo; Previous</a></span>
       
+      
+        <span style="margin-left: 15px"><a href="../util/" style="color: #fcfcfc">Next &raquo;</a></span>
       
     </span>
 </div>

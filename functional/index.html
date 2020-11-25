@@ -71,6 +71,11 @@
           
             <li class="toctree-l1">
 		
+    <a class="" href="../objective/">Objective</a>
+	    </li>
+          
+            <li class="toctree-l1">
+		
     <a class="" href="../util/">Util</a>
 	    </li>
           
@@ -113,14 +118,15 @@
               
                 <h2 id="dropout">dropout</h2>
 <p>Dropout function for any dimension input.</p>
-<pre><code class="python">dropout(input, p=0.5, shared_axes=(), rescale=True)
+<pre><code class="python">dropout(input, p=0.5, shared_axes=(), rescale=True, fill_value=0.0)
 </code></pre>
 
 <ul>
 <li><strong>input</strong>: tensor to be applied.</li>
-<li><strong>p</strong>: float, probability to drop a value (set to zero)</li>
+<li><strong>p</strong>: float scalar or list of floats, probability to drop a value (replaced with <code>fill_value</code>). If <code>p</code> is a list, the actual probability will be calculated in an interval of <code>p[i]</code> and <code>p[i+1]</code> randomly. By passing a list to <code>p</code>, dropout will be executed with varying probability. For example by passing <code>p = [0.1, 0.5]</code> to the function, the dropout probability will be varying at least 0.1 and at most 0.5.</li>
 <li><strong>shared_axes</strong>: tuple of int, axes to share the dropout mask over. By default, each value is dropped individually. For example, shared_axes=(0,) means using the same mask across the batch. shared_axes=(2, 3) means using the same mask across the spatial dimensions of 2D feature maps, i.e., drop channels.</li>
-<li><strong>rescale</strong>: if <code>True</code> (default), the input tensor will be rescaled by <code>1-p</code> to compensate mean fluctuation due to dropout<hr />
+<li><strong>rescale</strong>: if <code>True</code> (default), the input tensor will be rescaled by <code>1-p</code> to compensate mean fluctuation due to dropout</li>
+<li><strong>fill_value</strong>: in our implementation, the <em>dropped</em> values will be replaced with <code>fill_value</code> (default = 0, this is equivalent to the behavior of pytorch's builtin <code>dropout()</code>)<hr />
 </li>
 </ul>
               
@@ -130,7 +136,7 @@
   
     <div class="rst-footer-buttons" role="navigation" aria-label="footer navigation">
       
-        <a href="../util/" class="btn btn-neutral float-right" title="Util">Next <span class="icon icon-circle-arrow-right"></span></a>
+        <a href="../objective/" class="btn btn-neutral float-right" title="Objective">Next <span class="icon icon-circle-arrow-right"></span></a>
       
       
         <a href="../module/" class="btn btn-neutral" title="Module"><span class="icon icon-circle-arrow-left"></span> Previous</a>
@@ -162,7 +168,7 @@
         <span><a href="../module/" style="color: #fcfcfc;">&laquo; Previous</a></span>
       
       
-        <span style="margin-left: 15px"><a href="../util/" style="color: #fcfcfc">Next &raquo;</a></span>
+        <span style="margin-left: 15px"><a href="../objective/" style="color: #fcfcfc">Next &raquo;</a></span>
       
     </span>
 </div>
