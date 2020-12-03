@@ -82,7 +82,7 @@ def get_device(x):
 def grad_clip(parameters, min, max):
     parameters = list(filter(lambda p: p.grad is not None, parameters))
     for p in parameters:
-        p.grad.data = torch.clamp(p.grad.data, min=min, max=max)
+        p.grad.data.clamp_(min=min, max=max)
 
 class chunked_byte_writer(object):
     """
