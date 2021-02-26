@@ -5,7 +5,7 @@ $$
 x' = \gamma * \frac{(x-\mu)}{\sigma} + \beta
 \end{align}
 $$
-You can fabricate nonstandard BN variant by diabling any parameter among {$\mu$, $\sigma$, $\gamma$, $\beta$}
+You can fabricate nonstandard BN variant by disabling any parameter among {$\mu$, $\sigma$, $\gamma$, $\beta$}
 
 ```python
 class BatchNorm(input_shape=None, axes='auto', eps=1e-5, alpha=0.01, 
