@@ -1,5 +1,8 @@
 # History
 
+## version 0.9.3 [2-26-2021]
+* **MODIFIED**: add `mask` input/output support for `functional.dropout()`
+
 ## version 0.9.2 [12-3-2020]
 * **MODIFIED**: replace `torch.clamp()` with in-place `Tensor.clamp_()` for `util.grad_clip()`
 
