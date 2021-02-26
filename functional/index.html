@@ -118,15 +118,18 @@
               
                 <h2 id="dropout">dropout</h2>
 <p>Dropout function for any dimension input.</p>
-<pre><code class="python">dropout(input, p=0.5, shared_axes=(), rescale=True, fill_value=0.0)
+<pre><code class="python">dropout(input, mask=None, p=0.5, shared_axes=(), rescale=True, fill_value=0.0, return_mask=False)
 </code></pre>
 
 <ul>
 <li><strong>input</strong>: tensor to be applied.</li>
+<li><strong>mask</strong>: if given, input of <code>p</code> / <code>shared_axes</code> / <code>rescale</code> will be ignored, the input <code>mask</code> will be used directly.</li>
 <li><strong>p</strong>: float scalar or list of floats, probability to drop a value (replaced with <code>fill_value</code>). If <code>p</code> is a list, the actual probability will be calculated in an interval of <code>p[i]</code> and <code>p[i+1]</code> randomly. By passing a list to <code>p</code>, dropout will be executed with varying probability. For example by passing <code>p = [0.1, 0.5]</code> to the function, the dropout probability will be varying at least 0.1 and at most 0.5.</li>
 <li><strong>shared_axes</strong>: tuple of int, axes to share the dropout mask over. By default, each value is dropped individually. For example, shared_axes=(0,) means using the same mask across the batch. shared_axes=(2, 3) means using the same mask across the spatial dimensions of 2D feature maps, i.e., drop channels.</li>
 <li><strong>rescale</strong>: if <code>True</code> (default), the input tensor will be rescaled by <code>1-p</code> to compensate mean fluctuation due to dropout</li>
-<li><strong>fill_value</strong>: in our implementation, the <em>dropped</em> values will be replaced with <code>fill_value</code> (default = 0, this is equivalent to the behavior of pytorch's builtin <code>dropout()</code>)<hr />
+<li><strong>fill_value</strong>: in our implementation, the <em>dropped</em> values will be replaced with <code>fill_value</code> (default = 0, this is equivalent to the behavior of pytorch's builtin <code>dropout()</code>)</li>
+<li><strong>return_mask</strong>: if <code>True</code>, dropout mask used inside will be also returned</li>
+<li><strong>return</strong>: input masked or (input masked, mask) if <code>return_mask=True</code><hr />
 </li>
 </ul>
               
