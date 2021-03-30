@@ -44,6 +44,15 @@ get_device(x)
 * **return**: torch.device
 
 _______________________________________________________________________
+## torch_safe_run
+Retrieve device from tensor or module
+```python
+torch_safe_run(fn, inputs)
+```
+* **fn**: function to run
+* **inputs**: dict passed to function `fn`
+* **return**: (`status`, `result`) in which `status` = 0 if no exception, = 1 if CUDA OOM exception occurred; `result` is as returned by calling `fn(**inputs)`
+_______________________________________________________________________
 ## gpickle
 Pickle with gzip compression enabled.
 ```python

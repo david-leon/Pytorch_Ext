@@ -1,5 +1,8 @@
 # History
 
+## version 0.9.4 [3-30-2021]
+* **NEW**: add `util.torch_safe_run()` for recovering train/inference process from CUDA OOM
+
 ## version 0.9.3 [2-26-2021]
 * **MODIFIED**: add `mask` input/output support for `functional.dropout()`
 

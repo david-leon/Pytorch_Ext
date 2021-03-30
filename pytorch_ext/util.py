@@ -10,7 +10,7 @@ All rights reserved
 """
 
 __author__ = 'dawei.leng'
-import torch
+import torch, gc, warnings
 import gzip, pickle, hashlib
 import socket
 import numpy as np
@@ -83,6 +83,42 @@ def grad_clip(parameters, min, max):
     parameters = list(filter(lambda p: p.grad is not None, parameters))
     for p in parameters:
         p.grad.data.clamp_(min=min, max=max)
+
+def check_exception_msg(e, exception_descriptions=None):
+    """
+    Check whether exception `e` is related to CUDA OOM
+    :param e: exception captured
+    :param exception_descriptions: list of strings, each string is part of description of exception to be captured. Default = None, only CUDA OOM exceptions will be handled.
+    """
+    if exception_descriptions is None:
+        exception_descriptions = ['out of memory',
+                                  'CUBLAS_STATUS_ALLOC_FAILED',
+                                  'CUBLAS_STATUS_NOT_INITIALIZED',  ]
+    for msg in exception_descriptions:
+        if msg in e.args[0]:
+            return True
+    return False
+
+def torch_safe_run(fn, inputs, exception_descriptions=None):
+    """
+    Safe run against CUDA OOM, otherwise just raise the captured exception
+    :param fn: pytorch function
+    :param inputs: dict
+    :param exception_descriptions: list of strings, each string is part of description of exception to be captured. Default = None, only CUDA OOM exceptions will be handled.
+    :return: (status, result), in which status > 0 means OOM occurs; result is the return from `fn`
+    """
+    try:
+        result = fn(**inputs)
+        status = 0
+        return status, result
+    except Exception as e:
+        if check_exception_msg(e, exception_descriptions=exception_descriptions):
+            gc.collect()
+            torch.cuda.empty_cache()
+            status = 1
+            return status, None
+        else:
+            raise e
 
 class chunked_byte_writer(object):
     """
