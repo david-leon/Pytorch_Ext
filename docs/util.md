@@ -45,7 +45,7 @@ get_device(x)
 
 _______________________________________________________________________
 ## torch_safe_run
-Retrieve device from tensor or module
+Safe run against CUDA OOM, otherwise just raise the captured exception
 ```python
 torch_safe_run(fn, inputs)
 ```
