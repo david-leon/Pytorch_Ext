@@ -88,6 +88,9 @@
     <li class="toctree-l2"><a href="#get_device">get_device</a></li>
     
 
+    <li class="toctree-l2"><a href="#torch_safe_run">torch_safe_run</a></li>
+    
+
     <li class="toctree-l2"><a href="#gpickle">gpickle</a></li>
     
 
@@ -186,6 +189,17 @@
 <li><strong>return</strong>: torch.device</li>
 </ul>
 <hr />
+<h2 id="torch_safe_run">torch_safe_run</h2>
+<p>Retrieve device from tensor or module</p>
+<pre><code class="python">torch_safe_run(fn, inputs)
+</code></pre>
+
+<ul>
+<li><strong>fn</strong>: function to run</li>
+<li><strong>inputs</strong>: dict passed to function <code>fn</code></li>
+<li><strong>return</strong>: (<code>status</code>, <code>result</code>) in which <code>status</code> = 0 if no exception, = 1 if CUDA OOM exception occurred; <code>result</code> is as returned by calling <code>fn(**inputs)</code><hr />
+</li>
+</ul>
 <h2 id="gpickle">gpickle</h2>
 <p>Pickle with gzip compression enabled.</p>
 <pre><code class="python">.dump(data, filename, compresslevel=9, protocol=4)
